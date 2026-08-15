@@ -1,0 +1,75 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ---- 虚拟环境 ----
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# ---- 密钥与环境变量（绝对不能提交） ----
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+# DashScope / 阿里云凭证相关
+*apiKey*.csv
+*API-Key*.csv
+魔塔token*
+阿里云RAM/
+
+# ---- 运行时数据 ----
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+waveguard/waveguard.db
+
+# ---- 工具与临时文件 ----
+.venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 构建产物 ----
+*.docx
+!docs/*.docx
+
+# ---- 测试 / 覆盖率 ----
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/

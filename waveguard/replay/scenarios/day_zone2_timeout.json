@@ -1,0 +1,11 @@
+{
+  "name": "跌倒+呼吸正常→语音超时升级（Zone 2→3）",
+  "zone": "living",
+  "description": "跌倒后呼吸正常进入Zone 2语音确认 → 90秒无回应 → 自动升级Zone 3立即告警子女",
+  "speed": 30,
+  "segments": [
+    { "label": "在家活动", "duration_s": 20, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "突发跌倒", "duration_s": 3, "pattern": "spike", "low": 0.95, "high": 1.0, "br_low": 16, "br_high": 20 },
+    { "label": "倒地静止（Zone 2语音确认中，呼吸正常）", "duration_s": 100, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 14, "br_high": 18 }
+  ]
+}

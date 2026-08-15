@@ -1,0 +1,11 @@
+{
+  "name": "老人的一天·呼吸骤停（Zone 4 紧急救援）",
+  "zone": "bedroom",
+  "description": "夜间睡眠 → 呼吸逐渐变浅变慢 → 呼吸信号消失 → 紧急救援（建议拨打120）",
+  "speed": 10,
+  "segments": [
+    { "label": "夜间睡眠（呼吸平稳）", "duration_s": 30, "pattern": "still", "low": 0.02, "high": 0.05, "br_low": 14, "br_high": 18 },
+    { "label": "呼吸变浅变慢（潮式呼吸）", "duration_s": 20, "pattern": "still", "low": 0.01, "high": 0.03, "br_low": 6, "br_high": 10, "br_state": "shallow" },
+    { "label": "呼吸信号消失（紧急救援）", "duration_s": 30, "pattern": "still", "low": 0.005, "high": 0.015, "br_low": 0, "br_high": 2, "br_state": "lost" }
+  ]
+}

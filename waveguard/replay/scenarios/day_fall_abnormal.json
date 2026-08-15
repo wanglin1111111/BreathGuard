@@ -1,0 +1,13 @@
+{
+  "name": "老人的一天·跌倒+呼吸异常（Zone 3 立即告警）",
+  "zone": "living",
+  "description": "正常活动 → 跌倒 → 倒地后呼吸异常加快（>20次/分，提示脑缺氧或心源性病因）→ 跳过语音确认，立即告警子女",
+  "speed": 10,
+  "segments": [
+    { "label": "清晨在家活动（起床、走动）", "duration_s": 30, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "坐下休息（轻微活动）", "duration_s": 15, "pattern": "idle", "low": 0.1, "high": 0.2, "br_low": 13, "br_high": 17 },
+    { "label": "起身走动", "duration_s": 10, "pattern": "active", "low": 0.4, "high": 0.75, "br_low": 15, "br_high": 19 },
+    { "label": "突发剧烈波动（跌倒瞬间）", "duration_s": 3, "pattern": "spike", "low": 0.95, "high": 1.0, "br_low": 18, "br_high": 22 },
+    { "label": "倒地后静止（呼吸异常加快，立即告警）", "duration_s": 40, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 22, "br_high": 28, "br_state": "elevated" }
+  ]
+}

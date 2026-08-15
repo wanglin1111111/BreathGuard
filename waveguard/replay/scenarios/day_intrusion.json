@@ -1,0 +1,13 @@
+{
+  "name": "防盗监测·外出时入侵检测",
+  "zone": "living",
+  "description": "老人外出后家中无人 → 静默超过防盗阈值 → 防盗模式启动 → 异常运动闯入 → 持续运动确认入侵 → 通知子女",
+  "speed": 10,
+  "segments": [
+    { "label": "老人在家活动（准备外出）", "duration_s": 20, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "老人离开家中（无人）", "duration_s": 30, "pattern": "absent", "low": 0.0, "high": 0.005, "br_low": 0, "br_high": 0 },
+    { "label": "家中持续无人（进入防盗模式）", "duration_s": 300, "pattern": "absent", "low": 0.0, "high": 0.005, "br_low": 0, "br_high": 0 },
+    { "label": "异常运动闯入（疑似入侵）", "duration_s": 15, "pattern": "active", "low": 0.4, "high": 0.8, "br_low": 0, "br_high": 0 },
+    { "label": "持续运动（确认入侵）", "duration_s": 20, "pattern": "active", "low": 0.35, "high": 0.75, "br_low": 0, "br_high": 0 }
+  ]
+}

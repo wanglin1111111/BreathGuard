@@ -1,0 +1,11 @@
+{
+  "name": "心梗病史·跌倒+呼吸正常（跳过语音直接Zone 3）",
+  "zone": "living",
+  "description": "心梗病史老人跌倒，呼吸暂时正常，但系统识别心源性风险→跳过语音确认直接告警子女（需先在病历中勾选心梗）",
+  "speed": 30,
+  "segments": [
+    { "label": "在家活动", "duration_s": 20, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "突发跌倒（心源性晕厥）", "duration_s": 3, "pattern": "spike", "low": 0.95, "high": 1.0, "br_low": 16, "br_high": 20 },
+    { "label": "倒地静止（呼吸暂时正常，但心梗史→直接告警）", "duration_s": 40, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 14, "br_high": 18 }
+  ]
+}

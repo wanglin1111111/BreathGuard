@@ -1,0 +1,14 @@
+{
+  "name": "跌倒后呼吸渐进恶化（Zone 2→3 呼吸恶化升级）",
+  "zone": "living",
+  "description": "跌倒后呼吸正常进入Zone 2 → 呼吸逐渐加快→不整→浅慢 → Zone 2期间呼吸恶化立即升级Zone 3",
+  "speed": 30,
+  "segments": [
+    { "label": "在家活动", "duration_s": 20, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "突发跌倒", "duration_s": 3, "pattern": "spike", "low": 0.95, "high": 1.0, "br_low": 16, "br_high": 20 },
+    { "label": "倒地静止（Zone 2，呼吸正常→加快）", "duration_s": 20, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 14, "br_high": 18 },
+    { "label": "呼吸开始加快（Zone 2期间恶化）", "duration_s": 15, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 22, "br_high": 28, "br_state": "elevated" },
+    { "label": "呼吸变为不整（恶化持续）", "duration_s": 15, "pattern": "still", "low": 0.01, "high": 0.035, "br_low": 8, "br_high": 12, "br_state": "irregular" },
+    { "label": "呼吸浅慢（重度缺氧）", "duration_s": 20, "pattern": "still", "low": 0.01, "high": 0.03, "br_low": 5, "br_high": 9, "br_state": "shallow" }
+  ]
+}

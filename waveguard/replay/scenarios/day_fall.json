@@ -1,0 +1,14 @@
+{
+  "name": "老人的一天·跌倒+呼吸正常（Zone 2 语音确认）",
+  "zone": "living",
+  "description": "正常晨间活动 → 短暂静息 → 起身走动时突发剧烈波动 → 长时间静止，呼吸保持正常 → 进入语音确认流程（Zone 2）",
+  "speed": 10,
+  "segments": [
+    { "label": "清晨在家活动（起床、走动）", "duration_s": 40, "pattern": "active", "low": 0.35, "high": 0.7, "br_low": 14, "br_high": 18 },
+    { "label": "坐下休息（轻微活动）", "duration_s": 20, "pattern": "idle", "low": 0.1, "high": 0.2, "br_low": 13, "br_high": 17 },
+    { "label": "安静看电视（静息，有呼吸）", "duration_s": 30, "pattern": "still", "low": 0.02, "high": 0.05, "br_low": 14, "br_high": 18 },
+    { "label": "起身走动", "duration_s": 15, "pattern": "active", "low": 0.4, "high": 0.75, "br_low": 15, "br_high": 19 },
+    { "label": "突发剧烈波动（跌倒瞬间）", "duration_s": 3, "pattern": "spike", "low": 0.95, "high": 1.0, "br_low": 16, "br_high": 20 },
+    { "label": "倒地后静止（呼吸正常，语音确认中）", "duration_s": 60, "pattern": "still", "low": 0.02, "high": 0.045, "br_low": 14, "br_high": 18 }
+  ]
+}

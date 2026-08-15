@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>护院鹅 · 子女端</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f1420; color: #e8ecf4; min-height: 100vh;
+    display: flex; justify-content: center;
+  }
+  .app { width: 100%; max-width: 440px; padding: 16px 16px 40px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin: 6px 2px 14px; }
+  .topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: .5px; }
+  .conn { font-size: 12px; color: #8b93a7; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff5252; margin-right: 5px; vertical-align: middle; }
+  .dot.on { background: #34d67a; box-shadow: 0 0 6px #34d67a; }
+
+  /* 守护状态大卡 */
+  .status-card {
+    border-radius: 22px; padding: 26px 22px; text-align: center;
+    transition: background .6s ease, box-shadow .6s ease;
+    background: linear-gradient(160deg, #1b7a4b, #0f5a37);
+    box-shadow: 0 10px 30px rgba(52,214,122,.25);
+    position: relative; overflow: hidden;
+  }
+  .status-card.state-ok    { background: linear-gradient(160deg,#1b7a4b,#0f5a37); box-shadow:0 10px 30px rgba(52,214,122,.28); }
+  .status-card.state-away  { background: linear-gradient(160deg,#3a4152,#272c39); box-shadow:0 10px 24px rgba(0,0,0,.3); }
+  .status-card.state-warn  { background: linear-gradient(160deg,#c8871a,#9c6410); box-shadow:0 10px 30px rgba(240,180,60,.35); }
+  .status-card.state-alarm { background: linear-gradient(160deg,#d63333,#a11d1d); box-shadow:0 0 0 rgba(255,80,80,.6); animation: pulse 1.1s infinite; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,80,80,.55); }
+    70%  { box-shadow: 0 0 0 22px rgba(255,80,80,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,80,80,0); }
+  }
+  .home-name { font-size: 15px; opacity: .9; margin-bottom: 10px; }
+  .status-emoji { font-size: 52px; line-height: 1; margin-bottom: 10px; }
+  .status-text { font-size: 26px; font-weight: 700; letter-spacing: 1px; }
+  .status-sub { font-size: 13px; opacity: .88; margin-top: 8px; min-height: 18px; }
+
+  /* 活动强度条 */
+  .activity { margin-top: 18px; background: #181f2e; border-radius: 16px; padding: 16px; }
+  .activity .lbl { font-size: 12px; color: #8b93a7; display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .bar-wrap { height: 12px; background: #0c111c; border-radius: 8px; overflow: hidden; }
+  .bar { height: 100%; width: 2%; border-radius: 8px; background: linear-gradient(90deg,#34d67a,#f0c040); transition: width .25s ease, background .25s; }
+  .spark { margin-top: 12px; width: 100%; height: 54px; display: block; }
+
+  /* 时间线 */
+  .timeline { margin-top: 20px; }
+  .timeline h2 { font-size: 14px; color: #aeb6c8; margin: 0 4px 12px; font-weight: 600; }
+  .empty { color: #5c6478; font-size: 13px; text-align: center; padding: 24px 0; }
+  .item {
+    display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px;
+    background: #171e2c; margin-bottom: 10px; animation: slidein .35s ease;
+    border-left: 3px solid #3a4152;
+  }
+  @keyframes slidein { from { opacity: 0; transform: translateY(-8px);} to {opacity:1;transform:none;} }
+  .item .ic { font-size: 20px; flex-shrink: 0; }
+  .item .body { flex: 1; min-width: 0; }
+  .item .t1 { font-size: 14px; font-weight: 600; }
+  .item .t2 { font-size: 12px; color: #8b93a7; margin-top: 3px; word-break: break-all; }
+  .item .tm { font-size: 11px; color: #6b7488; margin-top: 4px; }
+  .item.lv-info     { border-left-color:#4a90d9; }
+  .item.lv-event    { border-left-color:#556; }
+  .item.lv-warning  { border-left-color:#f0b040; background:#241f14; }
+  .item.lv-emergency{ border-left-color:#ff5252; background:#2a1414; }
+  .badge { display:inline-block; font-size:10px; padding:2px 7px; border-radius:6px; margin-left:6px; vertical-align:middle; }
+  .badge.warning   { background:#5a4410; color:#ffd479; }
+  .badge.emergency { background:#5a1414; color:#ff8a8a; }
+  .reason { font-size:12px; color:#d7c08a; margin-top:6px; background:#1f1a0e; padding:7px 9px; border-radius:8px; line-height:1.5; }
+  .item.lv-emergency .reason { color:#ffb0b0; background:#331414; }
+  .foot { text-align:center; color:#5c6478; font-size:11px; margin-top:22px; line-height:1.6; }
+
+  /* 呼吸监测区块 */
+  .breath { margin-top: 14px; background: #181f2e; border-radius: 16px; padding: 16px; }
+  .breath .lbl { font-size: 12px; color: #8b93a7; display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .breath-row { display: flex; align-items: center; gap: 12px; }
+  .breath-val { font-size: 22px; font-weight: 700; color: #e8ecf4; min-width: 92px; }
+  .breath-val .unit { font-size: 12px; color: #8b93a7; font-weight: 400; margin-left: 3px; }
+  .breath-state { font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 10px; background: #0c111c; display: inline-block; }
+  .breath-state.s-normal    { color: #34d67a; }
+  .breath-state.s-fast      { color: #f0c040; }
+  .breath-state.s-irregular { color: #ff8a3d; }
+  .breath-state.s-shallow   { color: #ff5252; }
+  .breath-state.s-lost      { color: #ff2424; animation: blink 0.9s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+  /* 守护 Zone 级别 */
+  .zone-pill {
+    margin: 12px 2px 0; padding: 7px 14px; border-radius: 10px;
+    font-size: 12px; font-weight: 600; display: inline-block;
+    background: #181f2e; color: #34d67a; letter-spacing: .3px;
+  }
+  .zone-pill.z0 { background:#0f2a1c; color:#34d67a; }
+  .zone-pill.z1 { background:#2a2410; color:#f0c040; }
+  .zone-pill.z2 { background:#2a1c0c; color:#ff8a3d; }
+  .zone-pill.z3 { background:#2a1414; color:#ff5252; }
+  .zone-pill.z4 { background:#1c0a0a; color:#ff2424; animation: blink 0.9s infinite; }
+
+  /* 呼吸消失时状态卡闪烁 */
+  .status-card.breath-lost { animation: breathLostPulse 0.9s infinite; }
+  @keyframes breathLostPulse {
+    0%, 100% { background: linear-gradient(160deg,#5a1414,#3a0a0a); box-shadow: 0 0 0 0 rgba(255,36,36,.5); }
+    50%      { background: linear-gradient(160deg,#a11d1d,#5a0a0a); box-shadow: 0 0 24px 4px rgba(255,36,36,.5); }
+  }
+
+  /* Qwen 认知标签 */
+  .qwen-tag { display:inline-block; font-size:10px; padding:2px 7px; border-radius:6px; background:#0e2a4a; color:#7cc5ff; margin-right:6px; vertical-align:middle; font-weight:600; }
+
+  /* 告警标签（心源性/脑源性等） */
+  .alert-tag { display:inline-block; font-size:10px; padding:2px 7px; border-radius:6px; background:#3a1c4a; color:#d7a8ff; margin-right:6px; vertical-align:middle; font-weight:600; }
+  .suspected-cause { font-size:12px; color:#ffb0b0; margin-top:5px; background:#2a1a1a; padding:5px 9px; border-radius:8px; line-height:1.5; }
+
+  /* 语音确证面板 */
+  .voice-panel { margin-top:14px; background:#1a1520; border:2px solid #c8871a; border-radius:16px; padding:18px 16px; animation: slidein .35s ease; }
+  .voice-greeting { font-size:16px; font-weight:600; color:#f0c040; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .voice-icon { font-size:22px; animation: blink 1.5s infinite; }
+  .voice-timer { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:14px; color:#d7c08a; }
+  .voice-timer-bar { height:6px; flex:1; background:#0c111c; border-radius:4px; overflow:hidden; }
+  .voice-timer-bar::after { content:''; display:block; height:100%; width:100%; background:linear-gradient(90deg,#f0c040,#ff5252); transition:width 1s linear; }
+  .voice-buttons { display:flex; gap:12px; }
+  .voice-btn { flex:1; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; transition: transform .15s, box-shadow .2s; }
+  .voice-btn.ok { background:#1b7a4b; color:#fff; }
+  .voice-btn.help { background:#d63333; color:#fff; }
+  .voice-btn:hover { transform: translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3); }
+
+  /* 健康档案区块 */
+  .profile-card {
+    margin-top: 20px; background: #181f2e; border-radius: 16px; padding: 18px 16px;
+  }
+  .profile-card > h2 { font-size: 14px; color: #aeb6c8; margin: 0 0 14px; font-weight: 600; display:flex; align-items:center; gap:6px; }
+  .profile-card > h2 .save-tip { font-size:11px; color:#34d67a; font-weight:400; margin-left:auto; }
+  .profile-section { margin-bottom: 16px; }
+  .profile-section > .sec-title { font-size:12px; color:#00d4ff; font-weight:600; margin-bottom:9px; letter-spacing:.3px; }
+  .profile-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .profile-field { display:flex; flex-direction:column; gap:5px; }
+  .profile-field.full { grid-column: 1 / -1; }
+  .profile-field > label { font-size:11px; color:#8b93a7; }
+  .profile-field > input {
+    background:#0c111c; border:1px solid #232a3c; border-radius:9px;
+    color:#e8ecf4; font-size:13px; padding:8px 10px; outline:none;
+    transition:border-color .2s;
+  }
+  .profile-field > input:focus { border-color:#00d4ff; }
+
+  /* 复选框组（暗色） */
+  .chk-group { display:flex; flex-direction:column; gap:8px; }
+  .chk-item {
+    display:flex; align-items:flex-start; gap:9px;
+    background:#0c111c; border:1px solid #232a3c; border-radius:10px;
+    padding:9px 11px; cursor:pointer; transition:background .2s, border-color .2s;
+  }
+  .chk-item:hover { border-color:#2c3a52; }
+  .chk-item input[type="checkbox"] {
+    appearance:none; -webkit-appearance:none;
+    width:18px; height:18px; border-radius:5px; flex-shrink:0; margin-top:1px;
+    background:#181f2e; border:1px solid #3a4258; cursor:pointer; position:relative;
+    transition:background .2s, border-color .2s;
+  }
+  .chk-item input[type="checkbox"]:checked {
+    background:#00d4ff; border-color:#00d4ff;
+  }
+  .chk-item input[type="checkbox"]:checked::after {
+    content:''; position:absolute; left:5px; top:1px; width:5px; height:10px;
+    border:solid #0f1420; border-width:0 2px 2px 0; transform:rotate(45deg);
+  }
+  .chk-item .chk-text { flex:1; min-width:0; }
+  .chk-item .chk-label { font-size:13px; color:#e8ecf4; display:block; }
+  .chk-item .chk-impact { font-size:11px; color:#7c8499; display:block; margin-top:2px; }
+
+  /* 单选（家族史） */
+  .radio-group { display:flex; gap:10px; }
+  .radio-item {
+    flex:1; display:flex; align-items:center; gap:8px; justify-content:center;
+    background:#0c111c; border:1px solid #232a3c; border-radius:10px; padding:9px; cursor:pointer;
+    font-size:13px; color:#e8ecf4; transition:border-color .2s;
+  }
+  .radio-item input[type="radio"] {
+    appearance:none; -webkit-appearance:none;
+    width:16px; height:16px; border-radius:50%; flex-shrink:0;
+    background:#181f2e; border:1px solid #3a4258; cursor:pointer; position:relative;
+    transition:background .2s, border-color .2s;
+  }
+  .radio-item input[type="radio"]:checked {
+    background:#00d4ff; border-color:#00d4ff;
+  }
+  .radio-item input[type="radio"]:checked::after {
+    content:''; position:absolute; left:3px; top:3px; width:8px; height:8px;
+    border-radius:50%; background:#0f1420;
+  }
+
+  /* 保存按钮 */
+  .save-btn {
+    width:100%; margin-top:6px; padding:11px;
+    background:#00d4ff; color:#0f1420; border:none; border-radius:11px;
+    font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer;
+    transition:opacity .2s, transform .1s;
+  }
+  .save-btn:hover { opacity:.92; }
+  .save-btn:active { transform:scale(.985); }
+  .save-btn.saving { opacity:.6; pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>🛡️ 护院鹅</h1>
+    <span class="conn"><span class="dot" id="dot"></span><span id="connText">连接中…</span></span>
+  </div>
+
+  <div class="status-card state-away" id="card">
+    <div class="home-name">妈妈家</div>
+    <div class="status-emoji" id="emoji">🏠</div>
+    <div class="status-text" id="statusText">待接入</div>
+    <div class="status-sub" id="statusSub">等待守护数据…</div>
+  </div>
+  <div class="zone-pill z0" id="zonePill">Zone 0 正常</div>
+
+  <div class="guard-mode-bar" id="guardModeBar" style="display:none;margin-top:10px;background:#1a1a2e;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:14px;">
+      <span id="guardModeIcon">🔒</span>
+      <span id="guardModeText">护家模式</span>
+    </div>
+    <button id="guardModeToggle" onclick="toggleGuardMode()" style="background:#2a2a4e;color:#7cc5ff;border:1px solid #3a4258;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;">访客模式</button>
+  </div>
+
+  <div class="activity">
+    <div class="lbl"><span>实时活动强度</span><span id="actVal">--</span></div>
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <canvas class="spark" id="spark"></canvas>
+  </div>
+
+  <div class="breath">
+    <div class="lbl"><span>呼吸监测</span><span id="breathStateLbl">--</span></div>
+    <div class="breath-row">
+      <div class="breath-val"><span id="breathVal">--</span><span class="unit">次/分</span></div>
+      <div class="breath-state s-normal" id="breathState">--</div>
+    </div>
+  </div>
+
+  <!-- 语音确证面板（Zone 2 时显示） -->
+  <div class="voice-panel" id="voicePanel" style="display:none;">
+    <div class="voice-greeting">
+      <span class="voice-icon">🎙️</span>
+      <span id="voiceGreetingText">--</span>
+    </div>
+    <div class="voice-timer">
+      <div class="voice-timer-bar" id="voiceTimerBar"></div>
+      <span id="voiceCountdown">90</span>s
+    </div>
+    <div class="voice-buttons">
+      <button class="voice-btn ok" onclick="respondVoice('ok')">我没事</button>
+      <button class="voice-btn help" onclick="respondVoice('help')">我需要帮助</button>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <h2>守护时间线</h2>
+    <div id="list"><div class="empty">暂无事件，等待剧本播放…</div></div>
+  </div>
+
+  <!-- 健康档案 -->
+  <div class="profile-card">
+    <h2>📋 健康档案 <span class="save-tip" id="profileTip"></span></h2>
+
+    <div class="profile-section">
+      <div class="sec-title">基本信息</div>
+      <div class="profile-grid">
+        <div class="profile-field">
+          <label>老人姓名</label>
+          <input type="text" id="pfName" value="妈妈" maxlength="20">
+        </div>
+        <div class="profile-field">
+          <label>年龄</label>
+          <input type="number" id="pfAge" value="75" min="0" max="130">
+        </div>
+        <div class="profile-field">
+          <label>起床时间</label>
+          <input type="time" id="pfWake" value="06:30">
+        </div>
+        <div class="profile-field">
+          <label>就寝时间</label>
+          <input type="time" id="pfSleep" value="21:30">
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="sec-title">既往疾病</div>
+      <div class="chk-group" id="pfDiseases">
+        <label class="chk-item"><input type="checkbox" value="heart"><span class="chk-text"><span class="chk-label">心梗/心律失常</span><span class="chk-impact">心梗→跳过语音直接告警</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="stroke"><span class="chk-text"><span class="chk-label">脑梗/中风</span><span class="chk-impact">跌倒后优先考虑脑源性</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="epilepsy"><span class="chk-text"><span class="chk-label">癫痫</span><span class="chk-impact">异常活动可能为发作</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="diabetes"><span class="chk-text"><span class="chk-label">糖尿病</span><span class="chk-impact">低血糖→晕厥风险</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="parkinson"><span class="chk-text"><span class="chk-label">帕金森</span><span class="chk-impact">步态不稳→跌倒风险</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="alzheimer"><span class="chk-text"><span class="chk-label">阿尔茨海默病</span><span class="chk-impact">夜间游走·误判风险</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="hypertension"><span class="chk-text"><span class="chk-label">高血压</span><span class="chk-impact">脑卒中高危</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="anemia"><span class="chk-text"><span class="chk-label">严重贫血</span><span class="chk-impact">晕厥·跌倒风险</span></span></label>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="sec-title">当前用药</div>
+      <div class="chk-group" id="pfDrugs">
+        <label class="chk-item"><input type="checkbox" value="antihypertensive"><span class="chk-text"><span class="chk-label">降压药</span><span class="chk-impact">体位性低血压→跌倒</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="hypoglycemic"><span class="chk-text"><span class="chk-label">降糖药/胰岛素</span><span class="chk-impact">夜间低血糖→晕厥</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="sedative"><span class="chk-text"><span class="chk-label">镇静催眠药</span><span class="chk-impact">夜间跌倒·呼吸抑制</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="antidepressant"><span class="chk-text"><span class="chk-label">抗抑郁药</span><span class="chk-impact">跌倒风险增加</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="antiparkinsonian"><span class="chk-text"><span class="chk-label">抗帕金森药</span><span class="chk-impact">体位性低血压</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="antiepileptic"><span class="chk-text"><span class="chk-label">抗癫痫药</span><span class="chk-impact">嗜睡·共济失调</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="diuretic"><span class="chk-text"><span class="chk-label">利尿剂</span><span class="chk-impact">夜尿频多→夜间跌倒</span></span></label>
+        <label class="chk-item"><input type="checkbox" value="analgesic"><span class="chk-text"><span class="chk-label">镇痛药</span><span class="chk-impact">嗜睡·反应迟钝</span></span></label>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="sec-title">其他信息</div>
+      <div class="profile-grid">
+        <div class="profile-field">
+          <label>既往跌倒次数</label>
+          <input type="number" id="pfFallCount" value="0" min="0" max="999">
+        </div>
+        <div class="profile-field">
+          <label>既往晕厥次数</label>
+          <input type="number" id="pfSyncopeCount" value="0" min="0" max="999">
+        </div>
+      </div>
+      <div class="profile-field full" style="margin-top:10px;">
+        <label>心脏猝死家族史</label>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="pfScd" value="true"><span>是</span></label>
+          <label class="radio-item"><input type="radio" name="pfScd" value="false" checked><span>否</span></label>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" id="saveProfileBtn">保 存 健 康 档 案</button>
+  </div>
+
+  <div class="foot">
+    护院鹅居家安全守护系统 · 演示版<br>
+    认知层：Qwen-plus 大模型驱动 · 规则版降级保底
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const card = $('card');
+let history = [];            // 活动强度历史（画 sparkline）
+let hasEvent = false;
+let alarmActive = false;     // 一旦进入告警态，锁定红色直至 reset
+
+// ---- 状态卡渲染 ----
+function setState(state, emoji, text, sub) {
+  card.className = 'status-card state-' + state;
+  $('emoji').textContent = emoji;
+  $('statusText').textContent = text;
+  if (sub !== undefined) $('statusSub').textContent = sub;
+}
+
+// ---- 活动强度条 + sparkline ----
+function updateActivity(intensity, present) {
+  $('actVal').textContent = intensity.toFixed(2);
+  const pct = Math.min(100, Math.max(2, intensity * 100));
+  const bar = $('bar');
+  bar.style.width = pct + '%';
+  bar.style.background = intensity >= 0.9 ? '#ff5252'
+      : intensity >= 0.25 ? 'linear-gradient(90deg,#34d67a,#f0c040)'
+      : '#2f7a52';
+  history.push(intensity);
+  if (history.length > 120) history.shift();
+  drawSpark();
+
+  // 未进入告警时，随在场/活动更新绿卡
+  if (!alarmActive) {
+    if (!present) {
+      setState('away', '🚶', '外出', '未检测到在家活动');
+    } else if (intensity >= 0.25) {
+      setState('ok', '🟢', '在家活动', '一切安好，正在正常活动');
+    } else {
+      setState('ok', '😴', '在家静息', '安静休息中，呼吸平稳');
+    }
+  }
+}
+
+function drawSpark() {
+  const c = $('spark'), ctx = c.getContext('2d');
+  const w = c.width = c.clientWidth, h = c.height = 54;
+  ctx.clearRect(0, 0, w, h);
+  if (history.length < 2) return;
+  ctx.beginPath();
+  history.forEach((v, i) => {
+    const x = i / (history.length - 1) * w;
+    const y = h - Math.min(1, v) * (h - 6) - 3;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.strokeStyle = '#4ad38a'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+// ---- 呼吸监测 ----
+const BREATH_STATE_MAP = {
+  normal:    { text:'正常', cls:'s-normal' },
+  fast:      { text:'加快', cls:'s-fast' },
+  irregular: { text:'不整', cls:'s-irregular' },
+  shallow:   { text:'浅慢', cls:'s-shallow' },
+  lost:      { text:'消失', cls:'s-lost' },
+};
+
+function updateBreathing(rate, state) {
+  const valEl = $('breathVal');
+  const stEl  = $('breathState');
+  const lblEl = $('breathStateLbl');
+  if (rate != null && !isNaN(rate)) {
+    valEl.textContent = (typeof rate === 'number' ? rate.toFixed(1) : rate);
+  } else {
+    valEl.textContent = '--';
+  }
+  const sm = BREATH_STATE_MAP[state] || { text: (state || '--'), cls: 's-normal' };
+  stEl.textContent = sm.text;
+  stEl.className = 'breath-state ' + sm.cls;
+  lblEl.textContent = sm.text;
+
+  // 呼吸消失 → 状态卡闪烁；否则移除闪烁
+  if (state === 'lost') {
+    card.classList.add('breath-lost');
+  } else {
+    card.classList.remove('breath-lost');
+  }
+}
+
+// ---- 守护 Zone 级别 ----
+const ZONE_MAP = {
+  0: { text:'Zone 0 正常',       cls:'z0' },
+  1: { text:'Zone 1 关注',       cls:'z1' },
+  2: { text:'Zone 2 语音确认中', cls:'z2' },
+  3: { text:'Zone 3 立即告警',   cls:'z3' },
+  4: { text:'Zone 4 紧急救援',   cls:'z4' },
+};
+
+function updateZone(zone) {
+  const z = (zone != null && ZONE_MAP.hasOwnProperty(zone)) ? zone : 0;
+  const zm = ZONE_MAP[z];
+  const el = $('zonePill');
+  el.textContent = zm.text;
+  el.className = 'zone-pill ' + zm.cls;
+}
+
+// ---- 时间线 ----
+const EVENT_META = {
+  presence_on:   { ic:'🚪', name:'检测到有人在家' },
+  presence_off:  { ic:'🚶', name:'无人（外出）' },
+  motion_active: { ic:'🏃', name:'正常活动' },
+  still_too_long:{ ic:'⏱️', name:'长时间静止' },
+  suspected_fall:{ ic:'⚠️', name:'疑似跌倒！' },
+  no_wake_up:    { ic:'🛏️', name:'久未起身' },
+  activity_drop: { ic:'📉', name:'活动量下降' },
+  device_offline:{ ic:'📴', name:'设备离线' },
+  breathing_abnormal: { ic:'🫁', name:'呼吸异常' },
+  breathing_lost:     { ic:'🚨', name:'呼吸消失！' },
+  fall_breathing_ok:  { ic:'⚠️', name:'跌倒·呼吸正常' },
+  fall_breathing_bad: { ic:'🚨', name:'跌倒·呼吸异常！' },
+  intrusion_suspected: { ic:'🔒', name:'疑似入侵！' },
+  intrusion_confirmed: { ic:'🚨', name:'入侵确认！' },
+};
+
+function fmtTime(iso) { try { return iso.slice(11,19); } catch(e){ return ''; } }
+
+function addEvent(ev) {
+  clearEmpty();
+  const meta = EVENT_META[ev.type] || { ic:'•', name:ev.type };
+  const div = document.createElement('div');
+  div.className = 'item lv-event';
+  div.innerHTML = `<div class="ic">${meta.ic}</div>
+    <div class="body">
+      <div class="t1">${meta.name}</div>
+      <div class="t2">${ev.zone} ｜ 置信度 ${ev.confidence}</div>
+      <div class="tm">${fmtTime(ev.ts)}</div>
+    </div>`;
+  $('list').prepend(div);
+}
+
+function addAlert(al) {
+  clearEmpty();
+  const lv = al.level; // info/warning/emergency
+  const div = document.createElement('div');
+  div.className = 'item lv-' + lv;
+  const ic = lv === 'emergency' ? '🚨' : lv === 'warning' ? '⚠️' : 'ℹ️';
+  const label = lv === 'emergency' ? '紧急告警' : lv === 'warning' ? '预警' : '提示';
+  // 认知层来源标签：qwen-plus 时显示 Qwen认知 标签，否则保留原 🤖 前缀
+  const qwenTag = (al.agent_source === 'qwen-plus')
+    ? '<span class="qwen-tag">🤖 Qwen认知</span>'
+    : '🤖 ';
+  // 告警标签（心源性/脑源性等），仅在告警理由前显示
+  const alertTag = al.alert_tag
+    ? `<span class="alert-tag">${al.alert_tag}</span>`
+    : '';
+  // 标题处显示老人姓名（若提供）
+  const elderName = al.elder_name ? ` · ${al.elder_name}` : '';
+  // 疑似原因（若提供）
+  const suspectedCause = al.suspected_cause
+    ? `<div class="suspected-cause">疑似原因：${al.suspected_cause}</div>`
+    : '';
+  div.innerHTML = `<div class="ic">${ic}</div>
+    <div class="body">
+      <div class="t1">${label}${elderName}<span class="badge ${lv}">${al.state}</span></div>
+      <div class="reason">${alertTag}${qwenTag}${al.agent_reason || ''}</div>
+      ${suspectedCause}
+      <div class="tm">${fmtTime(al.created_at)}</div>
+    </div>`;
+  $('list').prepend(div);
+
+  // 升级状态卡
+  if (lv === 'emergency') {
+    alarmActive = true;
+    setState('alarm', '🚨', '紧急告警', '疑似跌倒 · 正在语音确证');
+  } else if (lv === 'warning' && !alarmActive) {
+    setState('warn', '⚠️', '需要关注', al.agent_reason || '');
+  }
+}
+
+function clearEmpty() {
+  if (!hasEvent) { $('list').innerHTML = ''; hasEvent = true; }
+}
+
+function resetUI() {
+  history = []; hasEvent = false; alarmActive = false;
+  $('list').innerHTML = '<div class="empty">已重置，等待剧本播放…</div>';
+  setState('away', '🏠', '待接入', '等待守护数据…');
+  $('actVal').textContent = '--'; $('bar').style.width = '2%';
+  drawSpark();
+  // 重置呼吸监测与守护 Zone
+  updateBreathing(null, 'normal');
+  updateZone(0);
+}
+
+// ---- WebSocket ----
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => { $('dot').classList.add('on'); $('connText').textContent = '守护中'; };
+  ws.onclose = () => {
+    $('dot').classList.remove('on'); $('connText').textContent = '已断开·重连中';
+    setTimeout(connect, 1500);
+  };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.kind === 'sample') {
+      const d = msg.data || {};
+      updateActivity(d.intensity, d.present);
+      if (d.breathing_rate !== undefined || d.breathing_state !== undefined) {
+        updateBreathing(d.breathing_rate, d.breathing_state);
+      }
+      if (d.guard_zone !== undefined) {
+        updateZone(d.guard_zone);
+      }
+    }
+    else if (msg.kind === 'event') addEvent(msg.data);
+    else if (msg.kind === 'alert') addAlert(msg.data);
+    else if (msg.kind === 'reset') resetUI();
+    else if (msg.kind === 'guard_mode') updateGuardMode(msg.data.enabled);
+    else if (msg.kind === 'family_confirmed') { /* UI feedback */ }
+    else if (msg.kind === 'voice_confirm') startVoiceConfirm(msg.data);
+    else if (msg.kind === 'voice_responded') handleVoiceResponded(msg.data);
+    else if (msg.kind === 'alert_cleared') clearVoicePanel();
+    else if (msg.kind === 'alert_escalated') clearVoicePanel();
+  };
+}
+
+// ---- 语音确证 ----
+let voiceCountdownTimer = null;
+function startVoiceConfirm(data) {
+  const panel = $('voicePanel');
+  panel.style.display = 'block';
+  $('voiceGreetingText').textContent = data.greeting || '您还好吗？';
+  // Web Speech API TTS 朗读
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(data.greeting);
+    utter.lang = 'zh-CN';
+    utter.rate = 0.9;
+    utter.pitch = 1.1;
+    speechSynthesis.speak(utter);
+  }
+  // 倒计时
+  let remaining = data.timeout_s || 90;
+  $('voiceCountdown').textContent = remaining;
+  if (voiceCountdownTimer) clearInterval(voiceCountdownTimer);
+  voiceCountdownTimer = setInterval(() => {
+    remaining--;
+    $('voiceCountdown').textContent = remaining;
+    const bar = $('voiceTimerBar');
+    if (bar) bar.style.width = (remaining / (data.timeout_s || 90) * 100) + '%';
+    if (remaining <= 0) {
+      clearInterval(voiceCountdownTimer);
+      clearVoicePanel();
+    }
+  }, 1000);
+}
+
+function clearVoicePanel() {
+  $('voicePanel').style.display = 'none';
+  if (voiceCountdownTimer) { clearInterval(voiceCountdownTimer); voiceCountdownTimer = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+}
+
+function handleVoiceResponded(data) {
+  clearVoicePanel();
+}
+
+async function respondVoice(answer) {
+  try {
+    await fetch('/api/voice-confirm/respond?answer=' + answer, { method: 'POST' });
+  } catch(e) { console.error('回应失败', e); }
+  clearVoicePanel();
+}
+
+// ---- 护家模式 ----
+function updateGuardMode(enabled) {
+  const bar = $('guardModeBar');
+  if (enabled) {
+    bar.style.display = 'flex';
+    $('guardModeIcon').textContent = '🔒';
+    $('guardModeText').textContent = '护家模式 · 监测中';
+    $('guardModeToggle').textContent = '切换访客模式';
+    $('guardModeToggle').style.background = '#2a2a4e';
+  } else {
+    bar.style.display = 'flex';
+    $('guardModeIcon').textContent = '👥';
+    $('guardModeText').textContent = '访客模式 · 护家暂停';
+    $('guardModeToggle').textContent = '恢复护家模式';
+    $('guardModeToggle').style.background = '#1a3a2e';
+  }
+}
+
+async function toggleGuardMode() {
+  try {
+    const r = await fetch('/api/guard-mode/toggle', { method: 'POST' });
+    const d = await r.json();
+    updateGuardMode(d.enabled);
+  } catch(e) { console.error('切换护家模式失败', e); }
+}
+// ---- 健康档案：加载 / 保存 ----
+function getCheckedValues(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`))
+    .map(el => el.value);
+}
+
+function getProfileData() {
+  const scdRadio = document.querySelector('input[name="pfScd"]:checked');
+  return {
+    name: $('pfName').value.trim(),
+    age: parseInt($('pfAge').value, 10) || 0,
+    wake_time: $('pfWake').value,
+    sleep_time: $('pfSleep').value,
+    diseases: getCheckedValues('pfDiseases'),
+    medications: getCheckedValues('pfDrugs'),
+    fall_count: parseInt($('pfFallCount').value, 10) || 0,
+    syncope_count: parseInt($('pfSyncopeCount').value, 10) || 0,
+    family_sudden_cardiac_death: scdRadio ? scdRadio.value === 'true' : false,
+  };
+}
+
+function fillProfile(p) {
+  if (!p) return;
+  if (p.name != null) $('pfName').value = p.name;
+  if (p.age != null) $('pfAge').value = p.age;
+  if (p.wake_time != null) $('pfWake').value = p.wake_time;
+  if (p.sleep_time != null) $('pfSleep').value = p.sleep_time;
+  if (Array.isArray(p.diseases)) {
+    document.querySelectorAll('#pfDiseases input[type="checkbox"]').forEach(el => {
+      el.checked = p.diseases.includes(el.value);
+    });
+  }
+  if (Array.isArray(p.medications)) {
+    document.querySelectorAll('#pfDrugs input[type="checkbox"]').forEach(el => {
+      el.checked = p.medications.includes(el.value);
+    });
+  }
+  if (p.fall_count != null) $('pfFallCount').value = p.fall_count;
+  if (p.syncope_count != null) $('pfSyncopeCount').value = p.syncope_count;
+  if (p.family_sudden_cardiac_death != null) {
+    const target = String(p.family_sudden_cardiac_death) === 'true';
+    document.querySelectorAll('input[name="pfScd"]').forEach(el => {
+      el.checked = (el.value === 'true') === target;
+    });
+  }
+}
+
+function showProfileTip(text, ok) {
+  const tip = $('profileTip');
+  tip.textContent = text;
+  tip.style.color = ok ? '#34d67a' : '#ff8a8a';
+  setTimeout(() => { tip.textContent = ''; }, 2500);
+}
+
+function loadProfile() {
+  fetch('/api/profile')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data) {
+        fillProfile(data);
+        showProfileTip('已加载档案', true);
+      }
+    })
+    .catch(() => { /* 后端未提供档案时静默，使用默认值 */ });
+}
+
+function saveProfile() {
+  const btn = $('saveProfileBtn');
+  btn.classList.add('saving');
+  btn.textContent = '保 存 中…';
+  fetch('/api/profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(getProfileData()),
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      showProfileTip('已保存', true);
+    })
+    .catch(err => {
+      console.error('saveProfile failed:', err);
+      showProfileTip('保存失败', false);
+    })
+    .finally(() => {
+      btn.classList.remove('saving');
+      btn.textContent = '保 存 健 康 档 案';
+    });
+}
+
+$('saveProfileBtn').addEventListener('click', saveProfile);
+
+connect();
+loadProfile();
+</script>
+</body>
+</html>
