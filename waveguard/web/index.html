@@ -465,6 +465,7 @@ const EVENT_META = {
   intrusion_confirmed: { ic:'🚨', name:'入侵确认！' },
 };
 
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtTime(iso) { try { return iso.slice(11,19); } catch(e){ return ''; } }
 
 function addEvent(ev) {
@@ -474,8 +475,8 @@ function addEvent(ev) {
   div.className = 'item lv-event';
   div.innerHTML = `<div class="ic">${meta.ic}</div>
     <div class="body">
-      <div class="t1">${meta.name}</div>
-      <div class="t2">${ev.zone} ｜ 置信度 ${ev.confidence}</div>
+      <div class="t1">${esc(meta.name)}</div>
+      <div class="t2">${esc(ev.zone)} ｜ 置信度 ${esc(ev.confidence)}</div>
       <div class="tm">${fmtTime(ev.ts)}</div>
     </div>`;
   $('list').prepend(div);
@@ -494,18 +495,18 @@ function addAlert(al) {
     : '🤖 ';
   // 告警标签（心源性/脑源性等），仅在告警理由前显示
   const alertTag = al.alert_tag
-    ? `<span class="alert-tag">${al.alert_tag}</span>`
+    ? `<span class="alert-tag">${esc(al.alert_tag)}</span>`
     : '';
   // 标题处显示老人姓名（若提供）
-  const elderName = al.elder_name ? ` · ${al.elder_name}` : '';
+  const elderName = al.elder_name ? ` · ${esc(al.elder_name)}` : '';
   // 疑似原因（若提供）
   const suspectedCause = al.suspected_cause
-    ? `<div class="suspected-cause">疑似原因：${al.suspected_cause}</div>`
+    ? `<div class="suspected-cause">疑似原因：${esc(al.suspected_cause)}</div>`
     : '';
   div.innerHTML = `<div class="ic">${ic}</div>
     <div class="body">
-      <div class="t1">${label}${elderName}<span class="badge ${lv}">${al.state}</span></div>
-      <div class="reason">${alertTag}${qwenTag}${al.agent_reason || ''}</div>
+      <div class="t1">${label}${elderName}<span class="badge ${lv}">${esc(al.state)}</span></div>
+      <div class="reason">${alertTag}${qwenTag}${esc(al.agent_reason || '')}</div>
       ${suspectedCause}
       <div class="tm">${fmtTime(al.created_at)}</div>
     </div>`;
